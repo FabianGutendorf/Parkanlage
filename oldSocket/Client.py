@@ -19,17 +19,14 @@ class Client():
 
 
     # Python SQLite
-
-    def __init__(self):
-        conn = sqlite3.connect('Parkanlage.db')
-        c = conn.cursor()
-        pass
+    # conn = sqlite3.connect('Parkanlage.db')
+    # c = conn.cursor()
     
-    def SQLiteSelect(self, statement):
+    # def SQLiteSelect(self, statement):
 
-        for row in c.execute(statement):
-            print(row)
-        pass
+    #     for row in c.execute(statement):
+    #         print(row)
+    #     pass
 # Python Socket Try
 
 # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
