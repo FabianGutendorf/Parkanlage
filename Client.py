@@ -27,8 +27,8 @@ class Client():
     
     def SQLiteSelect(self, statement):
 
-        for row in c.execute(statement):
-            print(row)
+        # for row in c.execute(statement):
+        #     print(row)
         pass
 # Python Socket Try
 
