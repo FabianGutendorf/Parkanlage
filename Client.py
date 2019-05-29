@@ -19,7 +19,6 @@ class Client():
 
 
     # Python SQLite
-    c
 
     def __init__(self):
         conn = sqlite3.connect('Parkanlage.db')
