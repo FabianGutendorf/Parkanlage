@@ -12,3 +12,6 @@ sudo pip3 install Flask
 
 # Flask starten
 FLASK_APP=WebServer.py flask run
+
+# mit Debugger starten (auf Port achten)
+python3 Webserver.py 
