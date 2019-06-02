@@ -1,13 +1,46 @@
-from flask import Flask, url_for, request, render_template
+from flask import Flask, url_for, request, render_template, g
+import sqlite3
 
 app = Flask(__name__)
+DATABASE = 'Parkanlage.db'
+
+# init DB
+def get_db():
+    db = getattr(g, "_database", None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+        return db
+
+# close DB
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, "_database", None)
+    if db is not None:
+        db.close()
+
+# execute Query
+def query_db(query, args=(), one = False):
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv # return the first entry if "one" is set, else return all 
+
+## Routing
 
 @app.route("/")
-def hello(): #index html
+def index(): #index html
+
+    result = ""
+    for parker in query_db('SELECT * FROM Parker'):
+        result += parker['Kennzeichen']
+
+    return result
     return render_template('index.html', 
         login_path=url_for("login"), 
         req_path=url_for("requirements"))
         # add params here
+        
 
 
 @app.route("/login") #login form, user input
@@ -25,7 +58,7 @@ def starter():
         name = request.form['name']
     else:
         name = request.args.GET('name')
-
+    
     return "logged " + name + " in"
 
 
