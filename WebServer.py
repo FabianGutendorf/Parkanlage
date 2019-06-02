@@ -30,12 +30,6 @@ def query_db(query, args=(), one = False):
 
 @app.route("/")
 def index(): #index html
-
-    result = ""
-    for parker in query_db('SELECT * FROM Parker'):
-        result += parker['Kennzeichen']
-
-    return result
     return render_template('index.html', 
         login_path=url_for("login"), 
         req_path=url_for("requirements"))
@@ -61,7 +55,14 @@ def starter():
     
     return "logged " + name + " in"
 
+@app.route("/database")
+def database():
 
+    result = ""
+    for parker in query_db('SELECT * FROM Parker'):
+        result += parker['Kennzeichen']
+
+    return render_template('database.html', req_path=result)
 
 if __name__ == '__main__':
     app.run(port=4698, debug=True)
