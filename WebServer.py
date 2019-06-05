@@ -29,63 +29,41 @@ def query_db(query, args=(), one = False):
 
 
 ## Routing
-
 @app.route("/")
 @app.route("/index")
 def index(): #index html
-    return render_template('index.html', 
-        login_path=url_for("login"),
+    return render_template('index.html',
         project_path=url_for("project_main"), 
         req_path=url_for("requirements"))
         # add params here
-        
-@app.route("/login") #login form, user input
-def login():
-    return render_template('login.html', param="Test")
 
 @app.route("/requirements") # requirements for the project
 def requirements():
     return render_template('requirements.html')
 
-@app.route("/starter", methods= ['POST', 'GET']) #logged in form, notify user
-def starter():
-    name = ""
-    if request.method == 'POST':
-        name = request.form['name']
-    else:
-        name = request.args.GET('name')
-    
-    return "logged " + name + " in"
-
-@app.route("/database")
-def database():
-    result = ""
-    for parker in query_db('SELECT * FROM Parker'):
-                result += parker['Kennzeichen']
-
-    return render_template('database.html', req_path=result)
-
-@app.route("/project_main", methods= ['GET', 'POST'])
+@app.route("/project_main", methods= ['GET', 'POST']) # main page
 def project_main():
         if request.method == 'POST':
                 licenseplate = request.form['licenseplate']
 
                 if 'drivein' in request.form:
                         # prüfe, ob Fahrer bereits existiert
+                        if IsDriverRegistered(licenseplate):
+                                # Hat Fahrer Dauerkarte
+                                if IsDriverCardUser(licenseplate):
 
-                        # if Fahrer != null
-                        # überprüfe ob Fahrer Dauerkarte hat
+                                        print("Fahrer existiert")
 
-                        # else // fahrer is null
-                        # Abfrage auf Dauerkarte y / n 
-                        return project_drivein(licenseplate)
+                        else: # Fahrer ist neu
+                                # Abfrage auf Dauerkarte y / n 
+                                return project_drivein(licenseplate)
                         
                 elif 'driveout' in request.form:
                         return project_driveout(licenseplate)
 
         return render_template('project_main.html')
 
-@app.route("/project_drivein", methods= ['GET', 'POST'])
+@app.route("/project_drivein", methods= ['GET', 'POST']) # drive in page (not registered)
 def project_drivein(licenseplate = None):
         if request.method == 'POST':
                 if 'card' in request.form:
@@ -95,7 +73,7 @@ def project_drivein(licenseplate = None):
 
         return render_template('project_drivein.html')
 
-@app.route("/project_driveout", methods= ['GET', 'POST'])
+@app.route("/project_driveout", methods= ['GET', 'POST']) # drive out pages + handling
 def project_driveout(licenseplate = None):
         
         carduser = True
@@ -110,9 +88,9 @@ def project_driveout(licenseplate = None):
                 return render_template("project_driveout_ticket.html", value_to_pay='123€')
 
 
+# Helper functions
 
-
-def checkPlaces(IDPlateCard):
+def IsPlaceFree(IDPlateCard):
         # declaration
         resultDB = ""
         parkCard = False
@@ -163,7 +141,16 @@ def checkPlaces(IDPlateCard):
                         return (quantityFreeSpacesCard + quantityFreeSpacesTicket) > 0
                 else:
                         return quantityFreeSpacesTicket >= 4
-                        
+
+def IsDriverCardUser(UserID):
+        return True
+
+def IsDriverRegistered(UserID):
+        return True
+
+def CheckForFreePlace(Licenseplate, DriverIsCardUser):
+        print("")
+
 # Main start
 if __name__ == '__main__':
     app.run(port=4698, debug=True)
