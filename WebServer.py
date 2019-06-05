@@ -95,26 +95,38 @@ def project_drivein(licenseplate = None):
 
         return render_template('project_drivein.html')
 
-@app.route("/project_driveout")
+@app.route("/project_driveout", methods= ['GET', 'POST'])
 def project_driveout(licenseplate = None):
-        carduser = False
+        
+        carduser = True
+        
+        if request.method == 'POST':
+                if 'pay' in request.form:
+                        return render_template("project_driveout_ticket_payed.html")
 
         if carduser:
                 return render_template("project_driveout_card.html")
         else:
-                return render_template("project_driveout_ticket.html")
+                return render_template("project_driveout_ticket.html", value_to_pay='123€')
 
-        return "Tschüss " + licenseplate
+
+
 
 def checkPlaces(IDPlateCard):
+        # declaration
         resultDB = ""
-        parkCard,quantityFreeSpacesCard,quantityFreeSpacesTicket,driverID
+        parkCard = False
+        quantityFreeSpacesCard = 0
+        quantityFreeSpacesTicket = 0
+        driverID = ""
+
         #Ist Kennzeichen in der Datenbank vorhanden?
         for vehicle in query_db('SELECT * FROM Fahrerauto WHERE Kennzeichen = ' + IDPlateCard):
                 resultDB += vehicle['FahrerID']
 
-        if resultDB = "":
+        if resultDB == "":
                 #Error
+                print("Error")
         else:
                 #Ist der Fahrzeughalter ein Dauerparker?
                 driverID = resultDB
@@ -122,10 +134,11 @@ def checkPlaces(IDPlateCard):
                 for driver in query_db('SELECT * FROM Fahrer WHERE ID = ' + driverID):
                         resultDB += driver['Dauerkarte']
 
-                if resultDB = "":
+                if resultDB == "":
+                        print("Error")
                         #Error
                 
-                parkCard = (resultDB = "1")
+                parkCard = (resultDB == "1")
 
                 #Kalkuliere freie Parkplätze
                 if parkCard:
