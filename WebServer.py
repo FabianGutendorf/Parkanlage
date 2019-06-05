@@ -52,7 +52,7 @@ def project_main():
                                 # Hat Fahrer Dauerkarte
                                 if IsDriverCardUser(licenseplate):
 
-                                print("Fahrer existiert")
+                                        print("Fahrer existiert")
 
                         else: # Fahrer ist neu
                                 # Abfrage auf Dauerkarte y / n 
