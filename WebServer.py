@@ -34,7 +34,8 @@ def query_db(query, args=(), one = False):
 @app.route("/index")
 def index(): #index html
     return render_template('index.html', 
-        login_path=url_for("login"), 
+        login_path=url_for("login"),
+        project_path=url_for("database"), 
         req_path=url_for("requirements"))
         # add params here
         
