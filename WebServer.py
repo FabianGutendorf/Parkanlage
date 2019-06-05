@@ -106,6 +106,51 @@ def project_driveout(licenseplate = None):
 
         return "Tschüss " + licenseplate
 
+def checkPlaces(IDPlateCard):
+        resultDB = ""
+        parkCard,quantityFreeSpacesCard,quantityFreeSpacesTicket,driverID
+        #Ist Kennzeichen in der Datenbank vorhanden?
+        for vehicle in query_db('SELECT * FROM Fahrerauto WHERE Kennzeichen = ' + IDPlateCard):
+                resultDB += vehicle['FahrerID']
+
+        if resultDB = "":
+                #Error
+        else:
+                #Ist der Fahrzeughalter ein Dauerparker?
+                driverID = resultDB
+                resultDB = ""
+                for driver in query_db('SELECT * FROM Fahrer WHERE ID = ' + driverID):
+                        resultDB += driver['Dauerkarte']
+
+                if resultDB = "":
+                        #Error
+                
+                parkCard = (resultDB = "1")
+
+                #Kalkuliere freie Parkplätze
+                if parkCard:
+                        for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
+                                               'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
+                                               'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
+                                               'WHERE Parker.Ausfahrt = NULL AND Fahrer.Dauerkarte = 1'):
+                                resultDB = places['Anzahl']
+                        
+                        quantityFreeSpacesCard = 40 - int(resultDB)
+        
+                for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
+                                        'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
+                                        'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
+                                        'WHERE Parker.Ausfahrt = NULL AND Fahrer.Dauerkarte = 0'):
+                        resultDB = places['Anzahl']
+                
+                quantityFreeSpacesTicket = 140 - int(resultDB)
+                
+                #Darf er parken?
+                if parkCard:
+                        return (quantityFreeSpacesCard + quantityFreeSpacesTicket) > 0
+                else:
+                        return quantityFreeSpacesTicket >= 4
+                        
 # Main start
 if __name__ == '__main__':
     app.run(port=4698, debug=True)
