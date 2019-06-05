@@ -35,7 +35,7 @@ def query_db(query, args=(), one = False):
 def index(): #index html
     return render_template('index.html', 
         login_path=url_for("login"),
-        project_path=url_for("database"), 
+        project_path=url_for("project_main"), 
         req_path=url_for("requirements"))
         # add params here
         
@@ -59,12 +59,52 @@ def starter():
 
 @app.route("/database")
 def database():
-
     result = ""
     for parker in query_db('SELECT * FROM Parker'):
-        result += parker['Kennzeichen']
+                result += parker['Kennzeichen']
 
     return render_template('database.html', req_path=result)
+
+@app.route("/project_main", methods= ['GET', 'POST'])
+def project_main():
+        if request.method == 'POST':
+                licenseplate = request.form['licenseplate']
+
+                if 'drivein' in request.form:
+                        # prüfe, ob Fahrer bereits existiert
+
+                        # if Fahrer != null
+                        # überprüfe ob Fahrer Dauerkarte hat
+
+                        # else // fahrer is null
+                        # Abfrage auf Dauerkarte y / n 
+                        return project_drivein(licenseplate)
+                        
+                elif 'driveout' in request.form:
+                        return project_driveout(licenseplate)
+
+        return render_template('project_main.html')
+
+@app.route("/project_drivein", methods= ['GET', 'POST'])
+def project_drivein(licenseplate = None):
+        if request.method == 'POST':
+                if 'card' in request.form:
+                        return "Dauerkarte"
+                elif 'ticket' in request.form:
+                        return "Einzelticket"
+
+        return render_template('project_drivein.html')
+
+@app.route("/project_driveout")
+def project_driveout(licenseplate = None):
+        carduser = False
+
+        if carduser:
+                return render_template("project_driveout_card.html")
+        else:
+                return render_template("project_driveout_ticket.html")
+
+        return "Tschüss " + licenseplate
 
 # Main start
 if __name__ == '__main__':
