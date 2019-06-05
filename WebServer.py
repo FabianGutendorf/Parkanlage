@@ -26,17 +26,18 @@ def query_db(query, args=(), one = False):
     cur.close()
     return (rv[0] if rv else None) if one else rv # return the first entry if "one" is set, else return all 
 
+
+
 ## Routing
 
 @app.route("/")
+@app.route("/index")
 def index(): #index html
     return render_template('index.html', 
         login_path=url_for("login"), 
         req_path=url_for("requirements"))
         # add params here
         
-
-
 @app.route("/login") #login form, user input
 def login():
     return render_template('login.html', param="Test")
@@ -64,5 +65,6 @@ def database():
 
     return render_template('database.html', req_path=result)
 
+# Main start
 if __name__ == '__main__':
     app.run(port=4698, debug=True)
