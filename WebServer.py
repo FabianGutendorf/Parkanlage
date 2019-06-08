@@ -146,7 +146,14 @@ def IsDriverCardUser(UserID):
         return True
 
 def IsDriverRegistered(UserID):
-        return True
+        resultDB = ""
+        for vehicle in query_db('SELECT * FROM Fahrerauto WHERE FahrerID = ' + UserID):
+                resultDB += vehicle['FahrerID']
+
+        if resultDB != "":
+                return True
+        else:
+                return False
 
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         print("")
