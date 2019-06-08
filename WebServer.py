@@ -6,8 +6,6 @@ DATABASE = 'Parkanlage.db'
 
 # init DB
 def get_db():
-    db = getattr(g, "_database", None)
-    if db is None:
         db = g._database = sqlite3.connect(DATABASE)
         db.row_factory = sqlite3.Row
         return db
@@ -25,7 +23,6 @@ def query_db(query, args=(), one = False):
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv # return the first entry if "one" is set, else return all 
-
 
 
 ## Routing
@@ -48,9 +45,11 @@ def project_main():
 
                 if 'drivein' in request.form:
                         # prüfe, ob Fahrer bereits existiert
-                        if IsDriverRegistered(licenseplate):
+                        UserID = GetUserIDFromLicensePlate(licenseplate)
+                        if UserID > -1:
+                                print("User is registered")
                                 # Hat Fahrer Dauerkarte
-                                if IsDriverCardUser(licenseplate):
+                                if IsDriverCardUser(UserID):
 
                                         print("Fahrer existiert")
 
@@ -76,16 +75,18 @@ def project_drivein(licenseplate = None):
 @app.route("/project_driveout", methods= ['GET', 'POST']) # drive out pages + handling
 def project_driveout(licenseplate = None):
         
-        carduser = True
+        if licenseplate is not None:
+                UserID = GetUserIDFromLicensePlate(licenseplate)
+                carduser = IsDriverCardUser(UserID)
         
-        if request.method == 'POST':
-                if 'pay' in request.form:
-                        return render_template("project_driveout_ticket_payed.html")
+                if request.method == 'POST':
+                        if 'pay' in request.form:
+                                return render_template("project_driveout_ticket_payed.html")
 
-        if carduser:
-                return render_template("project_driveout_card.html")
-        else:
-                return render_template("project_driveout_ticket.html", value_to_pay='123€')
+                if carduser:
+                        return render_template("project_driveout_card.html")
+                else:
+                        return render_template("project_driveout_ticket.html", value_to_pay='123€')
 
 
 # Helper functions
@@ -99,8 +100,9 @@ def IsPlaceFree(IDPlateCard):
         driverID = ""
 
         #Ist Kennzeichen in der Datenbank vorhanden?
-        for vehicle in query_db('SELECT * FROM Fahrerauto WHERE Kennzeichen = ' + IDPlateCard):
+        for vehicle in query_db('SELECT * FROM Fahrerauto WHERE Kennzeichen = "?"',[IDPlateCard]):
                 resultDB += vehicle['FahrerID']
+        
 
         if resultDB == "":
                 #Error
@@ -143,17 +145,25 @@ def IsPlaceFree(IDPlateCard):
                         return quantityFreeSpacesTicket >= 4
 
 def IsDriverCardUser(UserID):
-        return True
+        resultDB = -1
 
-def IsDriverRegistered(UserID):
-        resultDB = ""
-        for vehicle in query_db('SELECT * FROM Fahrerauto WHERE FahrerID = ' + UserID):
-                resultDB += vehicle['FahrerID']
+        query = "SELECT * FROM FAHRER WHERE ID = " + str(UserID)
+        for driver in query_db(query):
+                resultDB = driver['Dauerkarte']
 
-        if resultDB != "":
+        if resultDB == 1:
                 return True
         else:
                 return False
+
+def GetUserIDFromLicensePlate(Licenseplate): # return userID
+        resultDB = -1
+
+        query = "SELECT * FROM Fahrerauto WHERE Kennzeichen = \""+ Licenseplate + "\""
+        for vehicle in query_db(query):
+                resultDB = vehicle['FahrerID']
+
+        return resultDB
 
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         print("")
