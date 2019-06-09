@@ -26,6 +26,7 @@ def query_db(query, args=(), one = False):
 
 
 ## Routing
+
 @app.route("/")
 @app.route("/index")
 def index(): #index html
