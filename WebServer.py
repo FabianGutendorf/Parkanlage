@@ -48,10 +48,7 @@ def project_main():
                         UserID = GetUserIDFromLicensePlate(licenseplate)
                         if UserID > -1:
                                 print("User is registered")
-                                # Hat Fahrer Dauerkarte
-                                if IsDriverCardUser(UserID):
-
-                                        print("Fahrer existiert")
+                                return CheckForFreePlace(licenseplate, IsDriverCardUser(UserID))
 
                         else: # Fahrer ist neu
                                 # Abfrage auf Dauerkarte y / n 
@@ -66,9 +63,16 @@ def project_main():
 def project_drivein(licenseplate = None):
         if request.method == 'POST':
                 if 'card' in request.form:
+                        # Insert into DB new Fahrer with Drivercard
+
                         return "Dauerkarte"
+                        #return CheckForFreePlace(licenseplate, True)
+
                 elif 'ticket' in request.form:
+                        # Insert into DB new Fahrer with Drivercard
+
                         return "Einzelticket"
+                        #return CheckForFreePlace(licenseplate, False)
 
         return render_template('project_drivein.html')
 
@@ -79,71 +83,22 @@ def project_driveout(licenseplate = None):
                 UserID = GetUserIDFromLicensePlate(licenseplate)
                 carduser = IsDriverCardUser(UserID)
         
-                if request.method == 'POST':
-                        if 'pay' in request.form:
-                                return render_template("project_driveout_ticket_payed.html")
+                # Update DB Set Ausfahrtdatum = Date Now where Kennzeichen = licenseplate
+
 
                 if carduser:
                         return render_template("project_driveout_card.html")
                 else:
                         return render_template("project_driveout_ticket.html", value_to_pay='123€')
 
+        if request.method == 'POST':
+                if 'pay' in request.form:
+                        print("Return the payed HTML")
+                        return render_template("project_driveout_ticket_payed.html")
 
-# Helper functions
+# Helper functions                
 
-def IsPlaceFree(IDPlateCard):
-        # declaration
-        resultDB = ""
-        parkCard = False
-        quantityFreeSpacesCard = 0
-        quantityFreeSpacesTicket = 0
-        driverID = ""
-
-        #Ist Kennzeichen in der Datenbank vorhanden?
-        for vehicle in query_db('SELECT * FROM Fahrerauto WHERE Kennzeichen = "?"',[IDPlateCard]):
-                resultDB += vehicle['FahrerID']
-        
-
-        if resultDB == "":
-                #Error
-                print("Error")
-        else:
-                #Ist der Fahrzeughalter ein Dauerparker?
-                driverID = resultDB
-                resultDB = ""
-                for driver in query_db('SELECT * FROM Fahrer WHERE ID = ' + driverID):
-                        resultDB += driver['Dauerkarte']
-
-                if resultDB == "":
-                        print("Error")
-                        #Error
-                
-                parkCard = (resultDB == "1")
-
-                #Kalkuliere freie Parkplätze
-                if parkCard:
-                        for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
-                                               'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
-                                               'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
-                                               'WHERE Parker.Ausfahrt = NULL AND Fahrer.Dauerkarte = 1'):
-                                resultDB = places['Anzahl']
-                        
-                        quantityFreeSpacesCard = 40 - int(resultDB)
-        
-                for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
-                                        'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
-                                        'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
-                                        'WHERE Parker.Ausfahrt = NULL AND Fahrer.Dauerkarte = 0'):
-                        resultDB = places['Anzahl']
-                
-                quantityFreeSpacesTicket = 140 - int(resultDB)
-                
-                #Darf er parken?
-                if parkCard:
-                        return (quantityFreeSpacesCard + quantityFreeSpacesTicket) > 0
-                else:
-                        return quantityFreeSpacesTicket >= 4
-
+# Returns True if the User has a DriverCard
 def IsDriverCardUser(UserID):
         resultDB = -1
 
@@ -156,7 +111,8 @@ def IsDriverCardUser(UserID):
         else:
                 return False
 
-def GetUserIDFromLicensePlate(Licenseplate): # return userID
+# Returns UserID if one Exists, else -1
+def GetUserIDFromLicensePlate(Licenseplate): 
         resultDB = -1
 
         query = "SELECT * FROM Fahrerauto WHERE Kennzeichen = \""+ Licenseplate + "\""
@@ -165,8 +121,42 @@ def GetUserIDFromLicensePlate(Licenseplate): # return userID
 
         return resultDB
 
+# Returns True if a Place is free for the User, else False
+def IsPlaceFree(DriverIsCardUser):
+        
+        for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
+                                'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
+                                'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
+                                'WHERE Parker.Ausfahrtdatum = NULL AND Fahrer.Dauerkarte = 1'):
+                resultDB = places['Anzahl']
+        
+        quantityFreeSpacesCard = 40 - int(resultDB)
+        print("FreeSpacesCard " + str(quantityFreeSpacesCard))
+
+        for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
+                                'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
+                                'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
+                                'WHERE Parker.Ausfahrtdatum = NULL AND Fahrer.Dauerkarte = 0'):
+                resultDB = places['Anzahl']
+        
+        quantityFreeSpacesTicket = 140 - int(resultDB)
+        print("FreeSpacesTicket " + str(quantityFreeSpacesTicket))
+
+        if DriverIsCardUser:
+                return (quantityFreeSpacesCard + quantityFreeSpacesTicket) > 0
+        else:
+                return quantityFreeSpacesTicket >= 4
+
+# Returns the HTML File for the User, Valid if a Place is free, Invalid if not
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
-        print("")
+        if IsPlaceFree(DriverIsCardUser):
+                print("Place is free")
+                # insert into DB CardUser, LicensePlate, Date now
+                return render_template("project_drivein_valid.html")
+        else:
+                print("Place is not free")
+                return render_template("project_drivein_invalid.html")
+        
 
 # Main start
 if __name__ == '__main__':
