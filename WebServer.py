@@ -66,14 +66,14 @@ def project_drivein(licenseplate = None):
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
 
-                        return "Dauerkarte"
-                        #return CheckForFreePlace(licenseplate, True)
+                        #return "Dauerkarte"
+                        return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
                         # Insert into DB new Fahrer with Drivercard
 
-                        return "Einzelticket"
-                        #return CheckForFreePlace(licenseplate, False)
+                        #return "Einzelticket"
+                        return CheckForFreePlace(licenseplate, False)
 
         return render_template('project_drivein.html')
 
@@ -124,7 +124,8 @@ def GetUserIDFromLicensePlate(Licenseplate):
 
 # Returns True if a Place is free for the User, else False
 def IsPlaceFree(DriverIsCardUser):
-        
+        resultDB = 0
+
         for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
                                 'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
                                 'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
