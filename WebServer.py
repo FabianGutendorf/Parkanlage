@@ -1,5 +1,6 @@
 from flask import Flask, url_for, request, render_template, g
 import sqlite3
+import datetime
 
 app = Flask(__name__)
 DATABASE = 'Parkanlage.db'
@@ -24,6 +25,13 @@ def query_db(query, args=(), one = False):
     cur.close()
     return (rv[0] if rv else None) if one else rv # return the first entry if "one" is set, else return all 
 
+# insert data into database
+def modify_db(query):
+    db = get_db()
+    cur = db.cursor()
+    cur.execute(query)
+    db.commit()
+    db.close()
 
 ## Routing
 
@@ -65,12 +73,16 @@ def project_drivein(licenseplate = None):
         if request.method == 'POST':
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
-
+                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + licenseplate + ")")
+                        
                         #return "Dauerkarte"
                         return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
-                        # Insert into DB new Fahrer with Drivercard
+                        # Insert into DB new Fahrer without Drivercard
+                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 0")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + licenseplate + ")")
 
                         #return "Einzelticket"
                         return CheckForFreePlace(licenseplate, False)
@@ -85,7 +97,7 @@ def project_driveout(licenseplate = None):
                 carduser = IsDriverCardUser(UserID)
         
                 # Update DB Set Ausfahrtdatum = Date Now where Kennzeichen = licenseplate
-
+                modify_db("UPDATE Parker SET Ausfahrtszeitpunkt = " + datetime.datetime.now() + " WHERE Kennzeichen = " + licenseplate + " AND Ausfahrtszeitpunkt = NULL")
 
                 if carduser:
                         return render_template("project_driveout_card.html")
@@ -154,6 +166,7 @@ def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         if IsPlaceFree(DriverIsCardUser):
                 print("Place is free")
                 # insert into DB CardUser, LicensePlate, Date now
+                modify_db("INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, " + Licenseplate + ", " + datetime.datetime.now() + ", NULL")
                 return render_template("project_drivein_valid.html")
         else:
                 print("Place is not free")
