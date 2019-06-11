@@ -60,6 +60,11 @@ def project_main():
         if request.method == 'POST':
                 licenseplate = request.form['licenseplate']
 
+                if not is_table_empty("KennzeichenBuffer"):
+                        modify_db("DELETE FROM KennzeichenBuffer")
+                
+                modify_db("INSERT INTO KennzeichenBuffer VALUES (\""+ licenseplate + "\")")
+
                 if 'drivein' in request.form:
                         # prüfe, ob Fahrer bereits existiert
                         UserID = GetUserIDFromLicensePlate(licenseplate)
@@ -69,7 +74,7 @@ def project_main():
 
                         else: # Fahrer ist neu
                                 # Abfrage auf Dauerkarte y / n 
-                                return project_drivein(licenseplate)
+                                return project_drivein()
                         
                 elif 'driveout' in request.form:
                         return project_driveout(licenseplate)
@@ -77,9 +82,21 @@ def project_main():
         return render_template('project_main.html')
 
 @app.route("/project_drivein", methods= ['GET', 'POST']) # drive in page (not registered)
-def project_drivein(licenseplate = None):
+def project_drivein():
         if request.method == 'POST':
+                print(str(is_table_empty("KennzeichenBuffer")))
+                licenseplate = ''
+                licenseplate = query_db("SELECT ID FROM KennzeichenBuffer", (), True)
+                #resultDB = ''
+                #query = "SELECT * FROM KennzeichenBuffer"
+                #for kennzeichen in query_db(query):
+                #        resultDB = kennzeichen['ID']
+
+                #print(resultDB)
+                
                 strTemp = '"' + str(licenseplate) + '"'
+                modify_db("DELETE FROM KennzeichenBuffer")
+                print(licenseplate)
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
                         if is_table_empty("Fahrer"):
@@ -106,7 +123,8 @@ def project_drivein(licenseplate = None):
 
 @app.route("/project_driveout", methods= ['GET', 'POST']) # drive out pages + handling
 def project_driveout(licenseplate = None):
-        
+        licenseplate = query_db("SELECT ID FROM KennzeichenBuffer", (), True)
+        modify_db("DELETE FROM KennzeichenBuffer")
         if licenseplate is not None:
                 UserID = GetUserIDFromLicensePlate(licenseplate)
                 carduser = IsDriverCardUser(UserID)
