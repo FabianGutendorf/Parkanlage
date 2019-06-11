@@ -71,18 +71,19 @@ def project_main():
 @app.route("/project_drivein", methods= ['GET', 'POST']) # drive in page (not registered)
 def project_drivein(licenseplate = None):
         if request.method == 'POST':
+                strTemp = '"' + str(licenseplate) + '"'
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
-                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1")
-                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + licenseplate + ")")
+                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
                         
                         #return "Dauerkarte"
                         return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
                         # Insert into DB new Fahrer without Drivercard
-                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 0")
-                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + licenseplate + ")")
+                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 0)")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
 
                         #return "Einzelticket"
                         return CheckForFreePlace(licenseplate, False)
@@ -97,7 +98,7 @@ def project_driveout(licenseplate = None):
                 carduser = IsDriverCardUser(UserID)
         
                 # Update DB Set Ausfahrtdatum = Date Now where Kennzeichen = licenseplate
-                modify_db("UPDATE Parker SET Ausfahrtszeitpunkt = " + datetime.datetime.now() + " WHERE Kennzeichen = " + licenseplate + " AND Ausfahrtszeitpunkt = NULL")
+                modify_db("UPDATE Parker SET Ausfahrtszeitpunkt = " + str(datetime.datetime.now()) + " WHERE Kennzeichen = " + str(licenseplate) + " AND Ausfahrtszeitpunkt = NULL")
 
                 if carduser:
                         return render_template("project_driveout_card.html")
@@ -141,7 +142,7 @@ def IsPlaceFree(DriverIsCardUser):
         for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
                                 'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
                                 'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
-                                'WHERE Parker.Ausfahrtdatum = NULL AND Fahrer.Dauerkarte = 1'):
+                                'WHERE Parker.Ausfahrtszeitpunkt = NULL AND Fahrer.Dauerkarte = 1'):
                 resultDB = places['Anzahl']
         
         quantityFreeSpacesCard = 40 - int(resultDB)
@@ -150,7 +151,7 @@ def IsPlaceFree(DriverIsCardUser):
         for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
                                 'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
                                 'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
-                                'WHERE Parker.Ausfahrtdatum = NULL AND Fahrer.Dauerkarte = 0'):
+                                'WHERE Parker.Ausfahrtszeitpunkt = NULL AND Fahrer.Dauerkarte = 0'):
                 resultDB = places['Anzahl']
         
         quantityFreeSpacesTicket = 140 - int(resultDB)
@@ -166,7 +167,7 @@ def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         if IsPlaceFree(DriverIsCardUser):
                 print("Place is free")
                 # insert into DB CardUser, LicensePlate, Date now
-                modify_db("INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, " + Licenseplate + ", " + datetime.datetime.now() + ", NULL")
+                modify_db("INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, " + str(Licenseplate) + ", " + str(datetime.datetime.now()) + ", NULL)")
                 return render_template("project_drivein_valid.html")
         else:
                 print("Place is not free")
