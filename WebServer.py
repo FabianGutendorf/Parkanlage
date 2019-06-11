@@ -64,6 +64,7 @@ def project_main():
                         modify_db("DELETE FROM KennzeichenBuffer")
                 
                 modify_db("INSERT INTO KennzeichenBuffer VALUES (\""+ licenseplate + "\")")
+                print("inserted")
 
                 if 'drivein' in request.form:
                         # prüfe, ob Fahrer bereits existiert
@@ -84,19 +85,12 @@ def project_main():
 @app.route("/project_drivein", methods= ['GET', 'POST']) # drive in page (not registered)
 def project_drivein():
         if request.method == 'POST':
-                print(str(is_table_empty("KennzeichenBuffer")))
-                licenseplate = ''
-                licenseplate = select_db("SELECT ID FROM KennzeichenBuffer", (), True)
-                #resultDB = ''
-                #query = "SELECT * FROM KennzeichenBuffer"
-                #for kennzeichen in query_db(query):
-                #        resultDB = kennzeichen['ID']
-
-                #print(resultDB)
                 
-                strTemp = '"' + str(licenseplate) + '"'
-                modify_db("DELETE FROM KennzeichenBuffer")
-                print(licenseplate)
+
+                licenseplate = ""
+                for result in select_db("SELECT ID FROM KennzeichenBuffer"):
+                        licenseplate = result['ID']     
+
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
                         if is_table_empty("Fahrer"):
@@ -105,9 +99,10 @@ def project_drivein():
                                 modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
 
                         #INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), "Kennzeichen")
-                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + str(licenseplate) + "\")")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + licenseplate + "\")")
                         
                         #return "Dauerkarte"
+                        modify_db("DELETE FROM KennzeichenBuffer")
                         return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
@@ -121,6 +116,7 @@ def project_drivein():
                         modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + str(licenseplate) + "\")")
 
                         #return "Einzelticket"
+                        modify_db("DELETE FROM KennzeichenBuffer")
                         return CheckForFreePlace(licenseplate, False)
 
         return render_template('project_drivein.html')
