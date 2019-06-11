@@ -18,8 +18,8 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-# execute Query
-def query_db(query, args=(), one = False):
+# select data from database
+def select_db(query, args=(), one = False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
@@ -34,7 +34,7 @@ def modify_db(query):
     db.close()
 
 def is_table_empty(tableName):
-    result = query_db("SELECT * FROM " + str(tableName), (), True)
+    result = select_db("SELECT * FROM " + str(tableName), (), True)
     if result == None:
         return True
     else:
@@ -86,7 +86,7 @@ def project_drivein():
         if request.method == 'POST':
                 print(str(is_table_empty("KennzeichenBuffer")))
                 licenseplate = ''
-                licenseplate = query_db("SELECT ID FROM KennzeichenBuffer", (), True)
+                licenseplate = select_db("SELECT ID FROM KennzeichenBuffer", (), True)
                 #resultDB = ''
                 #query = "SELECT * FROM KennzeichenBuffer"
                 #for kennzeichen in query_db(query):
@@ -99,28 +99,26 @@ def project_drivein():
                 print(licenseplate)
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
-                        print("card")
-                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
-
                         if is_table_empty("Fahrer"):
                                 modify_db("INSERT INTO Fahrer VALUES (1, 1)")
                         else:
                                 modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
 
-                                
-                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
+                        #INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), "Kennzeichen")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + str(licenseplate) + "\")")
                         
                         #return "Dauerkarte"
                         return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
-                        print("ticket")
                         # Insert into DB new Fahrer without Drivercard
                         if is_table_empty("Fahrer"):
                                 modify_db("INSERT INTO Fahrer VALUES (1, 0)")
                         else:
                                 modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 0)")
-                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
+
+                        #INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), "Kennzeichen")
+                        modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + str(licenseplate) + "\")")
 
                         #return "Einzelticket"
                         return CheckForFreePlace(licenseplate, False)
@@ -129,14 +127,15 @@ def project_drivein():
 
 @app.route("/project_driveout", methods= ['GET', 'POST']) # drive out pages + handling
 def project_driveout(licenseplate = None):
-        licenseplate = query_db("SELECT ID FROM KennzeichenBuffer", (), True)
+        licenseplate = select_db("SELECT ID FROM KennzeichenBuffer", (), True)
         modify_db("DELETE FROM KennzeichenBuffer")
         if licenseplate is not None:
                 UserID = GetUserIDFromLicensePlate(licenseplate)
                 carduser = IsDriverCardUser(UserID)
         
-                # Update DB Set Ausfahrtdatum = Date Now where Kennzeichen = licenseplate
-                modify_db("UPDATE Parker SET Ausfahrtszeitpunkt = " + '"' + str(datetime.datetime.now())+ '"' + " WHERE Kennzeichen = " + '"' + str(licenseplate) + '"' + " AND Ausfahrtszeitpunkt = " + '"' + "NULL" + '"')
+                #UPDATE Parker SET Ausfahrtszeitpunkt = "Datetime.Now" WHERE Kennzeichen = "Kennzeichen" AND Ausfahrtszeitpunkt = "NULL"
+                query = "UPDATE Parker SET Ausfahrtszeitpunkt = \"" + str(datetime.datetime.now()) + "\" WHERE Kennzeichen = \"" + str(licenseplate) + "\" AND Ausfahrstzeitpunkt = \"NULL\""
+                modify_db(query)
 
                 if carduser:
                         return render_template("project_driveout_card.html")
@@ -145,8 +144,8 @@ def project_driveout(licenseplate = None):
 
         if request.method == 'POST':
                 if 'pay' in request.form:
-                        print("Return the payed HTML")
                         return render_template("project_driveout_ticket_payed.html")
+
 
 # Helper functions                
 
@@ -155,7 +154,7 @@ def IsDriverCardUser(UserID):
         resultDB = -1
 
         query = "SELECT * FROM FAHRER WHERE ID = " + str(UserID)
-        for driver in query_db(query):
+        for driver in select_db(query):
                 resultDB = driver['Dauerkarte']
 
         if resultDB == 1:
@@ -168,7 +167,7 @@ def GetUserIDFromLicensePlate(Licenseplate):
         resultDB = -1
 
         query = "SELECT * FROM Fahrerauto WHERE Kennzeichen = \""+ Licenseplate + "\""
-        for vehicle in query_db(query):
+        for vehicle in select_db(query):
                 resultDB = vehicle['FahrerID']
 
         return resultDB
@@ -177,22 +176,21 @@ def GetUserIDFromLicensePlate(Licenseplate):
 def IsPlaceFree(DriverIsCardUser):
         resultDB = 0
 
-        for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
+        for places in select_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
                                 'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
                                 'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
                                 'WHERE Parker.Ausfahrtszeitpunkt = "NULL" AND Fahrer.Dauerkarte = 1'):
                 resultDB = places['Anzahl']
         
         quantityFreeSpacesCard = 40 - int(resultDB)
-        print("FreeSpacesCard " + str(quantityFreeSpacesCard))
 
-        for places in query_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
+        for places in select_db('SELECT COUNT(Parker.Kennzeichen) AS Anzahl FROM Parker ' +
                                 'LEFT JOIN Fahrerauto ON Fahrerauto.Kennzeichen = Parker.Kennzeichen ' +
                                 'LEFT JOIN Fahrer ON Fahrer.ID = Fahrerauto.FahrerID ' +
                                 'WHERE Parker.Ausfahrtszeitpunkt = "NULL" AND Fahrer.Dauerkarte = 0'):
                 resultDB = places['Anzahl']
+
         quantityFreeSpacesTicket = 140 - int(resultDB)
-        print("FreeSpacesTicket " + str(quantityFreeSpacesTicket))
 
         if DriverIsCardUser:
                 return (quantityFreeSpacesCard + quantityFreeSpacesTicket) > 0
@@ -202,12 +200,12 @@ def IsPlaceFree(DriverIsCardUser):
 # Returns the HTML File for the User, Valid if a Place is free, Invalid if not
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         if IsPlaceFree(DriverIsCardUser):
-                print("Place is free")
-                # insert into DB CardUser, LicensePlate, Date now
-                modify_db("INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, " + '"' + str(Licenseplate) + '"' + ", " +  '"' + str(datetime.datetime.now()) + '"' + ", " + '"' + "NULL" + '"' + ")")
+                # INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, "Kennzeichen", "Datetime.Now", "NULL")
+                query = "INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"Null\")"
+                modify_db(query)
                 return render_template("project_drivein_valid.html")
+
         else:
-                print("Place is not free")
                 return render_template("project_drivein_invalid.html")
         
 
