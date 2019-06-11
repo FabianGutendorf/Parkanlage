@@ -99,16 +99,22 @@ def project_drivein():
                 print(licenseplate)
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
+                        print("card")
+                        modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
+
                         if is_table_empty("Fahrer"):
                                 modify_db("INSERT INTO Fahrer VALUES (1, 1)")
                         else:
                                 modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
+
+                                
                         modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
                         
                         #return "Dauerkarte"
                         return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
+                        print("ticket")
                         # Insert into DB new Fahrer without Drivercard
                         if is_table_empty("Fahrer"):
                                 modify_db("INSERT INTO Fahrer VALUES (1, 0)")
