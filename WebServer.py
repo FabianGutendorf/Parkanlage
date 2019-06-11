@@ -130,7 +130,7 @@ def project_driveout(licenseplate = None):
                 carduser = IsDriverCardUser(UserID)
         
                 #UPDATE Parker SET Ausfahrtszeitpunkt = "Datetime.Now" WHERE Kennzeichen = "Kennzeichen" AND Ausfahrtszeitpunkt = "NULL"
-                query = "UPDATE Parker SET Ausfahrtszeitpunkt = \"" + str(datetime.datetime.now()) + "\" WHERE Kennzeichen = \"" + str(licenseplate) + "\" AND Ausfahrstzeitpunkt = \"NULL\""
+                query = "UPDATE Parker SET Ausfahrtszeitpunkt = \"" + str(datetime.datetime.now()) + "\" WHERE Kennzeichen = \"" + str(licenseplate) + "\" AND Ausfahrtszeitpunkt = \"NULL\""
                 modify_db(query)
 
                 if carduser:
@@ -162,7 +162,7 @@ def IsDriverCardUser(UserID):
 def GetUserIDFromLicensePlate(Licenseplate): 
         resultDB = -1
 
-        query = "SELECT * FROM Fahrerauto WHERE Kennzeichen = \""+ Licenseplate + "\""
+        query = "SELECT * FROM Fahrerauto WHERE Kennzeichen = \""+ str(Licenseplate) + "\""
         for vehicle in select_db(query):
                 resultDB = vehicle['FahrerID']
 
@@ -197,7 +197,10 @@ def IsPlaceFree(DriverIsCardUser):
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         if IsPlaceFree(DriverIsCardUser):
                 # INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, "Kennzeichen", "Datetime.Now", "NULL")
-                query = "INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"Null\")"
+                if is_table_empty("Parker"):
+                        query = "INSERT INTO Parker VALUES(1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"Null\")"
+                else:
+                        query = "INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"Null\")"
                 modify_db(query)
                 return render_template("project_drivein_valid.html")
 
