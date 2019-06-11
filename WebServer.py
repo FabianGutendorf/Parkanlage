@@ -195,6 +195,7 @@ def CheckForFreePlace(Licenseplate, DriverIsCardUser):
                         query = "INSERT INTO Parker VALUES(1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"NULL\")"
                 else:
                         query = "INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"NULL\")"
+                                
                 modify_db(query)
                 return render_template("project_drivein_valid.html")
 
