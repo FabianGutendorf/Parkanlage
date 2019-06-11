@@ -130,7 +130,7 @@ def project_driveout(licenseplate = None):
                 if carduser:
                         return render_template("project_driveout_card.html")
                 else:
-                        return render_template("project_driveout_ticket.html", value_to_pay='123€')
+                        return render_template("project_driveout_ticket.html", value_to_pay='123€') #für weitere Implementation hier Methode für Preis einbauen
 
         if request.method == 'POST':
                 if 'pay' in request.form:
