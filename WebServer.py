@@ -72,8 +72,10 @@ def project_main():
 def project_drivein(licenseplate = None):
         if request.method == 'POST':
                 strTemp = '"' + str(licenseplate) + '"'
+                print(strTemp)
                 if 'card' in request.form:
                         # Insert into DB new Fahrer with Drivercard
+                        print("card")
                         modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 1)")
                         modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
                         
@@ -81,6 +83,7 @@ def project_drivein(licenseplate = None):
                         return CheckForFreePlace(licenseplate, True)
 
                 elif 'ticket' in request.form:
+                        print("ticket")
                         # Insert into DB new Fahrer without Drivercard
                         modify_db("INSERT INTO Fahrer VALUES ((SELECT MAX(ID) FROM Fahrer) + 1, 0)")
                         modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), " + strTemp + ")")
