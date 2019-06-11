@@ -100,8 +100,7 @@ def project_drivein():
 
                         #INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), "Kennzeichen")
                         modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + licenseplate + "\")")
-                        
-                        #return "Dauerkarte"
+
                         modify_db("DELETE FROM KennzeichenBuffer")
                         return CheckForFreePlace(licenseplate, True)
 
@@ -115,7 +114,6 @@ def project_drivein():
                         #INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), "Kennzeichen")
                         modify_db("INSERT INTO Fahrerauto VALUES ((SELECT MAX(ID) FROM Fahrer), \"" + str(licenseplate) + "\")")
 
-                        #return "Einzelticket"
                         modify_db("DELETE FROM KennzeichenBuffer")
                         return CheckForFreePlace(licenseplate, False)
 
