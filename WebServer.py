@@ -190,7 +190,8 @@ def IsPlaceFree(DriverIsCardUser):
 # Returns the HTML File for the User, Valid if a Place is free, Invalid if not
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
         count = IsPlaceFree(DriverIsCardUser)
-        isFree = False;
+        isFree = False
+        
         if DriverIsCardUser:
                 isFree = count > 0
         else:
