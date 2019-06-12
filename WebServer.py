@@ -195,6 +195,7 @@ def CheckForFreePlace(Licenseplate, DriverIsCardUser):
                 isFree = count > 0
         else:
                 isFree = count >= 4
+
         if isFree:
                 # INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, "Kennzeichen", "Datetime.Now", "NULL")
                 if is_table_empty("Parker"):
@@ -205,7 +206,7 @@ def CheckForFreePlace(Licenseplate, DriverIsCardUser):
                 modify_db(query)
 
                 if(DriverIsCardUser):
-                        return render_template("project_drivein_valid.html", free_places="")
+                        return render_template("project_drivein_valid.html")
                 else:
                         return render_template("project_drivein_valid.html", free_places=("Freie Plätze: " + str(count)))
 
