@@ -183,13 +183,19 @@ def IsPlaceFree(DriverIsCardUser):
         quantityFreeSpacesTicket = 140 - int(resultDB)
 
         if DriverIsCardUser:
-                return (quantityFreeSpacesCard + quantityFreeSpacesTicket) > 0
+                return (quantityFreeSpacesCard + quantityFreeSpacesTicket)
         else:
-                return quantityFreeSpacesTicket >= 4
+                return quantityFreeSpacesTicket
 
 # Returns the HTML File for the User, Valid if a Place is free, Invalid if not
 def CheckForFreePlace(Licenseplate, DriverIsCardUser):
-        if IsPlaceFree(DriverIsCardUser):
+        count = IsPlaceFree(DriverIsCardUser)
+        isFree = False;
+        if DriverIsCardUser:
+                isFree = count > 0
+        else:
+                isFree = count >= 4
+        if isFree:
                 # INSERT INTO Parker VALUES((SELECT MAX(ID) FROM Parker) + 1, "Kennzeichen", "Datetime.Now", "NULL")
                 if is_table_empty("Parker"):
                         query = "INSERT INTO Parker VALUES(1, \"" + str(Licenseplate) + "\",\"" + str(datetime.datetime.now()) + "\",\"NULL\")"
@@ -201,7 +207,7 @@ def CheckForFreePlace(Licenseplate, DriverIsCardUser):
                 if(DriverIsCardUser):
                         return render_template("project_drivein_valid.html", free_places="")
                 else:
-                        return render_template("project_drivein_valid.html", free_places=("Freie Plätze: " + str(40)))
+                        return render_template("project_drivein_valid.html", free_places=("Freie Plätze: " + str(count)))
 
         else:
                 return render_template("project_drivein_invalid.html")
